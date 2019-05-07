@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = AnimationTesting.cpp Hitbox.h Hitbox.cpp
+OBJS = LannesSim.cpp Hitbox.h Hitbox.cpp
 
 #CC specifies which compiler we're using
 CC = g++
