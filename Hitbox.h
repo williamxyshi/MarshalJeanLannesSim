@@ -10,11 +10,16 @@ class Hitbox
 		int getXCoord();
 		int getYCoord();
 
+		void moveHitboxHoriz( bool right );
+		bool moveHitboxVert();
+
 		void setXCoord( int _xCoord );
 		void setYCoord( int _yCoord );
 
 		int xCoord;
 		int yCoord;
+		
+		int jumpTick = 0;
 
 };
 
