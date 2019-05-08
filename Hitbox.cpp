@@ -90,10 +90,10 @@ void Lannes::jumpingLannes()
 
 Cannonball::Cannonball( Hitbox& lannes )
 {
-	xCoord = 1300;
+	xCoord = 1408;
 	yCoord = 0;
 
-	int lannesX = lannes.xCoord;
+	int lannesX = lannes.xCoord + 200;
 	int lannesY = lannes.yCoord;
 
 	bFactor = xCoord;

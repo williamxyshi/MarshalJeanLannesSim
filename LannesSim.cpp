@@ -16,7 +16,7 @@ bool loadMedia( std::string path );
 void close();
 SDL_Surface* loadSurface( std::string path );
 
-SDL_Window* gWindow = NULL;
+SDL_Window* window = NULL;
     
 SDL_Surface* screenSurface = NULL;
 
@@ -35,8 +35,8 @@ bool init()
     else
     {
         //Create window
-        gWindow = SDL_CreateWindow( "LannesSimulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-        if( gWindow == NULL )
+        window = SDL_CreateWindow( "LannesSimulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+        if( window == NULL )
         {
             printf( "The window could not be drawn SDL Error: %s\n", SDL_GetError() );
             success = false;
@@ -44,7 +44,7 @@ bool init()
         else
         {
             //Get window's surface
-            screenSurface = SDL_GetWindowSurface( gWindow );
+            screenSurface = SDL_GetWindowSurface( window );
         }
     }
     return success;
@@ -75,8 +75,8 @@ void close()
     ballSurface = NULL;
 
     //Destroy window
-    SDL_DestroyWindow( gWindow );
-    gWindow = NULL;
+    SDL_DestroyWindow( window );
+    window = NULL;
 
     //Quits SDL
     SDL_Quit();
@@ -114,15 +114,25 @@ int main( int argc, char* args[] )
     //Load background
     backgroundSurface = loadSurface( "background.bmp" );
 
+    std::vector<SDL_Surface*> lannesVect;
     //player model
     Hitbox lannes{ 0, 772 };
     imageSurface = loadSurface( "lannesstep1.bmp" );
 
+    lannesVect.push_back( imageSurface );
+
+    imageSurface = loadSurface( "lannesstep2.bmp" );
+
+    lannesVect.push_back( imageSurface );
+
+    imageSurface = loadSurface( "lannesjump.bmp" );
+    lannesVect.push_back( imageSurface );
+
     //cannonball texture
     ballSurface = loadSurface("cannonball.bmp");
+    SDL_SetColorKey(ballSurface, SDL_TRUE, SDL_MapRGB(ballSurface->format, 255, 0, 0));
 
     //load the player model
-    SDL_SetColorKey(imageSurface, SDL_TRUE, SDL_MapRGB(imageSurface->format, 255, 0, 0));
     SDL_Rect lannesPos;
     lannesPos.x = lannes.getXCoord();
     lannesPos.y = lannes.getYCoord();
@@ -135,10 +145,11 @@ int main( int argc, char* args[] )
     stretchRect.w = SCREEN_WIDTH;
     stretchRect.h = SCREEN_HEIGHT;
     SDL_BlitScaled( backgroundSurface, NULL, screenSurface, &stretchRect );
-    SDL_UpdateWindowSurface( gWindow );
+    SDL_UpdateWindowSurface( window );
 
     bool quit = false;
     bool lannesJumping = false;
+    int lannesWalkTick = 0;
     std::vector<Cannonball> cannonballList; 
 
     Cannonball cannonball{ lannes };
@@ -170,10 +181,12 @@ int main( int argc, char* args[] )
 
                     case SDLK_LEFT:
                     lannes.moveHitboxHoriz( false );
+                    lannesWalkTick++;
                     break;
 
                     case SDLK_RIGHT:
                     lannes.moveHitboxHoriz( true );
+                    lannesWalkTick++;
                     break;
 
                     default:
@@ -182,15 +195,38 @@ int main( int argc, char* args[] )
             }
         }
 
+        //redraws lannes every tick
+        lannesPos.x = lannes.getXCoord();
+        lannesPos.y = lannes.getYCoord();
+
+        //walking animation
+        if(!lannesJumping)
+        {
+            if( lannesWalkTick < 3 )
+            {
+                imageSurface = lannesVect.at(0);
+            }
+            else if( lannesWalkTick <= 6 )
+            {
+                if( lannesWalkTick == 6 ){ lannesWalkTick = 0; }
+                imageSurface = lannesVect.at(1);
+            }
+        }
+
         //lannes jumping loop
         if( lannesJumping )
         {
             lannesJumping = lannes.moveHitboxVert();
+            imageSurface = lannesVect.at(2);
+            lannesWalkTick = 0;
         }
 
-        //redraws lannes every tick
-        lannesPos.x = lannes.getXCoord();
-        lannesPos.y = lannes.getYCoord();
+        //safety, so that there is always a sprite drawn
+        if(!imageSurface)
+        {
+            imageSurface = lannesVect.at(0);
+        }
+        SDL_SetColorKey(imageSurface, SDL_TRUE, SDL_MapRGB(imageSurface->format, 255, 0, 0));
         SDL_BlitSurface( imageSurface, NULL, screenSurface, &lannesPos );
   
         //cannonball spawns
@@ -230,7 +266,7 @@ int main( int argc, char* args[] )
             }
         }*/
 
-        SDL_UpdateWindowSurface( gWindow );
+        SDL_UpdateWindowSurface( window );
     }
 
     close();
