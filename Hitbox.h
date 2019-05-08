@@ -40,14 +40,19 @@ class Lannes: public Hitbox
 		const int lannesSpeed {80};
 };
 
-class Cannonball: public Hitbox
+class Cannonball
 {
 	public:
-		Cannonball( int xStartCoord, int yStartCoord );
-		void moveCannonball( );
+		Cannonball( Hitbox& lannes );
+		bool calculateTrajectory();
 
 		bool detectHit();
 
+		int xCoord;
+		int yCoord;
+
 	private:
-		const int currentTick = 0;
+		double aFactor;
+		int bFactor, cFactor;
+		int currentTick, minTick;
 };

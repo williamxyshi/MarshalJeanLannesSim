@@ -1,6 +1,9 @@
 #include <SDL.h>
 #include <stdio.h>
 #include <string>
+#include <cstdlib>
+#include <vector>
+#include <iostream>
 #include "Hitbox.h"
 
 //Screen dimension
@@ -112,11 +115,14 @@ int main( int argc, char* args[] )
     backgroundSurface = loadSurface( "background.bmp" );
 
     //player model
-    Hitbox lannes{ 0, 836 };
-    imageSurface = loadSurface( "lannes.bmp" );
+    Hitbox lannes{ 0, 772 };
+    imageSurface = loadSurface( "lannesstep1.bmp" );
+
+    //cannonball texture
+    ballSurface = loadSurface("cannonball.bmp");
 
     //load the player model
-    SDL_SetColorKey(imageSurface, SDL_TRUE, SDL_MapRGB(imageSurface->format, 0, 0, 0));
+    SDL_SetColorKey(imageSurface, SDL_TRUE, SDL_MapRGB(imageSurface->format, 255, 0, 0));
     SDL_Rect lannesPos;
     lannesPos.x = lannes.getXCoord();
     lannesPos.y = lannes.getYCoord();
@@ -133,6 +139,10 @@ int main( int argc, char* args[] )
 
     bool quit = false;
     bool lannesJumping = false;
+    std::vector<Cannonball> cannonballList; 
+
+    Cannonball cannonball{ lannes };
+
     SDL_Event e;
 
     while( !quit )
@@ -183,6 +193,43 @@ int main( int argc, char* args[] )
         lannesPos.y = lannes.getYCoord();
         SDL_BlitSurface( imageSurface, NULL, screenSurface, &lannesPos );
   
+        //cannonball spawns
+        //int random = rand() % 200 + 1;     // v2 in the range 1 to 200
+
+        cannonball.calculateTrajectory();
+        SDL_Rect ballPos;
+        ballPos.x = cannonball.xCoord;
+        ballPos.y = cannonball.yCoord;
+        SDL_BlitSurface( ballSurface, NULL, screenSurface, &ballPos );
+
+        /*if( random = 100 )
+        {
+            Cannonball cannonball{ lannes };
+            cannonballList.push_back( cannonball );
+        }
+
+        if( !cannonballList.empty() )
+        {
+            std::vector<Cannonball>::iterator ballIt = cannonballList.begin();
+            std::vector<Cannonball>::iterator ballItEnd = cannonballList.end();
+            for( ; ballIt != ballItEnd; ++ballIt )
+            {
+                Cannonball ball = *ballIt;
+                ball.calculateTrajectory();
+
+                ball.detectHit();
+
+                SDL_Rect ballPos;
+                ballPos.x = ball.xCoord;
+                ballPos.y = ball.yCoord;
+                SDL_BlitSurface( ballSurface, NULL, screenSurface, &ballPos );
+
+                std::cout<<ball.xCoord<<" "<< ball.yCoord << " ";
+
+
+            }
+        }*/
+
         SDL_UpdateWindowSurface( gWindow );
     }
 

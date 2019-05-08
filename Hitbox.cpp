@@ -33,10 +33,10 @@ void Hitbox::moveHitboxHoriz( bool right )
 {
 	if( right )
 	{
-		xCoord += 5;
+		xCoord += 7;
 		return;
 	}
-	xCoord -= 5;
+	xCoord -= 7;
 }
 
 bool Hitbox::moveHitboxVert()
@@ -48,11 +48,11 @@ bool Hitbox::moveHitboxVert()
 	}
 	else if( jumpTick < 100 )
 	{
-		yCoord -= 1;
+		yCoord -= 2;
 	}
 	else
 	{
-		yCoord += 1;
+		yCoord += 2;
 	}
 	jumpTick++;
 	return true;
@@ -88,8 +88,33 @@ void Lannes::jumpingLannes()
 
 }
 
-void Cannonball::moveCannonball(  )
+Cannonball::Cannonball( Hitbox& lannes )
 {
+	xCoord = 1300;
+	yCoord = 0;
+
+	int lannesX = lannes.xCoord;
+	int lannesY = lannes.yCoord;
+
+	bFactor = xCoord;
+	cFactor = yCoord;
+
+	aFactor = 1*( (double)lannesY - (double)cFactor )/( ((double)lannesX - (double)bFactor)*((double)lannesX - (double)bFactor) );
+
+	minTick = 0;
+	currentTick = xCoord;
+}
+
+bool Cannonball::calculateTrajectory(  )
+{
+	currentTick--;
+	if( currentTick != minTick )
+	{
+		xCoord = currentTick;
+		yCoord = (aFactor * ( (xCoord - bFactor )*(xCoord - bFactor ) ) + cFactor);
+		return true;
+	}
+	return false;
 
 }
 
