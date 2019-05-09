@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdlib>
 #include <vector>
+#include <utility>
 #include <iostream>
 #include "Hitbox.h"
 
@@ -16,13 +17,136 @@ bool loadMedia( std::string path );
 void close();
 SDL_Surface* loadSurface( std::string path );
 
-SDL_Window* window = NULL;
-    
-SDL_Surface* screenSurface = NULL;
+static SDL_Window* window = NULL;
+static SDL_Surface* screenSurface = NULL;
+static SDL_Surface* backgroundSurface = NULL;
+static SDL_Surface* imageSurface = NULL;
+static SDL_Surface* ballSurface = NULL;
 
-SDL_Surface* backgroundSurface = NULL;
-SDL_Surface* imageSurface = NULL;
-SDL_Surface* ballSurface = NULL;
+class Textures
+{
+    public:
+        typedef std::vector<SDL_Surface*> textureVect;
+
+        virtual initializeTexture( std::string path )
+        {
+            SDL_Surface* surface = loadSurface( path );
+            if( !surface )
+            {
+                printf( "could not load texture! error: %s\n", SDL_GetError() );
+            }
+            textures.push_back( surface );
+        }
+
+        virtual textureVect getTextures()
+        {
+            return textures;
+        }
+
+        virtual SDL_Surface* getTexture( int index )
+        {
+            SDL_Surface* surface = textures.at(index);
+            if( !surface ){ printf("no texture!"); return nullptr; }
+            return surface;
+        }
+
+    protected:
+        textureVect textures;
+};
+
+class ObjectTextures : public Textures
+{
+    public:
+        typedef std::pair<int, int> textureLoc;
+        typedef std::vector<textureLoc> textureLocVect;
+
+        void initializeTexture( std::string path, int x, int y )
+        {
+            SDL_Surface* surface = loadSurface( path );
+            if( !surface )
+            {
+                printf( "could not load texture! error: %s\n", SDL_GetError() );
+            }
+            textures.push_back( surface );
+            textureLoc locationPair { x, y };
+            locationVector.push_back( locationPair );
+        }
+
+        void handleObjectMotion( bool lannesMoved )
+        {
+            SDL_Rect objectPos;
+            SDL_Surface* surface;
+            if(lannesMoved)
+            {
+                for( int i = 0; i < textures.size(); ++i )
+                {
+                    surface = textures.at(i);
+                    textureLoc locationPair = locationVector.at(i);
+
+                    objectPos.x = locationPair.first - 200;
+                    objectPos.y = locationPair.second;
+                }
+            }
+            else
+            {
+                for( int i = 0; i < textures.size(); ++i )
+                {
+                    surface = textures.at(i);
+                    textureLoc locationPair = locationVector.at(i);
+
+                    objectPos.x = locationPair.first;
+                    objectPos.y = locationPair.second;
+                }
+            }
+
+            SDL_SetColorKey( surface, SDL_TRUE, SDL_MapRGB(surface->format, 255, 0, 0));
+            SDL_BlitSurface( surface, NULL, screenSurface, &objectPos );
+        }
+
+    private:
+        textureLocVect locationVector;
+};
+
+class LannesTextures : public Textures
+{
+    public:
+        void handleLannesMotion( bool lannesJumping, Hitbox lannes, bool lannesMoved )
+        {
+            SDL_Surface* surface;
+            //walking animation
+            if(!lannesJumping)
+            {
+                if( lannesWalkTick < 3 )
+                {
+                    surface = textures.at(0);
+                }
+                else if( lannesWalkTick <= 6 )
+                {
+                    if( lannesWalkTick == 6 ){ lannesWalkTick = 0; }
+                    surface = textures.at(1);
+                }
+
+                if( lannesMoved ){ lannesWalkTick++; }
+            }
+            //lannes jumping loop
+            else if( lannesJumping )
+            {
+                surface = textures.at(2);
+                lannesWalkTick = 0;
+            }
+
+            SDL_Rect lannesPos;
+            lannesPos.x = lannes.getXCoord();
+            lannesPos.y = lannes.getYCoord();
+
+            SDL_SetColorKey( surface, SDL_TRUE, SDL_MapRGB(surface->format, 255, 0, 0));
+            SDL_BlitSurface( surface, NULL, screenSurface, &lannesPos );
+
+            return;
+        }
+    private:
+        int lannesWalkTick = 0;
+};
 
 bool init()
 {
@@ -104,6 +228,26 @@ SDL_Surface* loadSurface( std::string path )
     return returnSurface;
 }
 
+LannesTextures loadLannesTextures()
+{
+    LannesTextures lannesTextures;
+    lannesTextures.initializeTexture( "textures/lannesstep1.bmp" );
+    lannesTextures.initializeTexture( "textures/lannesstep2.bmp" );
+    lannesTextures.initializeTexture( "textures/lannesjump.bmp" );
+    return lannesTextures;
+}
+
+ObjectTextures loadObjectTextures()
+{
+    ObjectTextures objectTextures;
+    objectTextures.initializeTexture( "textures/tree1.bmp", 1440, 569 );
+    //objectTextures.initializeTexture( "textures/tree2.bmp", 1440, 569 );
+    //objectTextures.initializeTexture( "textures/tree3.bmp", 1440, 569 );
+   // objectTextures.initializeTexture( "textures/tree4.bmp", 1440, 569 );
+    //objectTextures.initializeTexture( "textures/tree5.bmp", 1440, 569 );
+    return objectTextures;
+}
+
 int main( int argc, char* args[] )
 {
     if( !init() )
@@ -111,32 +255,25 @@ int main( int argc, char* args[] )
         close();
         return 0;
     }
-    //Load background
-    backgroundSurface = loadSurface( "background.bmp" );
+    //Load background textures
+    backgroundSurface = loadSurface( "textures/background.bmp" );
+    ObjectTextures objectTextures = loadObjectTextures();
 
-    std::vector<SDL_Surface*> lannesVect;
+    objectTextures.handleObjectMotion( false );
+
     //player model
-    Hitbox lannes{ 0, 772 };
-    imageSurface = loadSurface( "lannesstep1.bmp" );
-
-    lannesVect.push_back( imageSurface );
-
-    imageSurface = loadSurface( "lannesstep2.bmp" );
-
-    lannesVect.push_back( imageSurface );
-
-    imageSurface = loadSurface( "lannesjump.bmp" );
-    lannesVect.push_back( imageSurface );
+    Hitbox lannes{ 0, 700 };
+    LannesTextures lannesTextures = loadLannesTextures();
 
     //cannonball texture
-    ballSurface = loadSurface("cannonball.bmp");
+    ballSurface = loadSurface("textures/cannonball.bmp");
     SDL_SetColorKey(ballSurface, SDL_TRUE, SDL_MapRGB(ballSurface->format, 255, 0, 0));
 
-    //load the player model
+    //load the player model for launch
     SDL_Rect lannesPos;
     lannesPos.x = lannes.getXCoord();
     lannesPos.y = lannes.getYCoord();
-    SDL_BlitSurface( imageSurface, NULL, screenSurface, &lannesPos );
+    lannesTextures.handleLannesMotion( false, lannes, false );
 
     //Apply the background stretched to the appropriate resolution
     SDL_Rect stretchRect;
@@ -149,7 +286,6 @@ int main( int argc, char* args[] )
 
     bool quit = false;
     bool lannesJumping = false;
-    int lannesWalkTick = 0;
     std::vector<Cannonball> cannonballList; 
 
     Cannonball cannonball{ lannes };
@@ -158,6 +294,7 @@ int main( int argc, char* args[] )
 
     while( !quit )
     {
+        bool lannesMoved = false;
         //resets the window
         SDL_BlitScaled( backgroundSurface, NULL, screenSurface, &stretchRect );
         while( SDL_PollEvent( &e ) != 0 )
@@ -169,6 +306,7 @@ int main( int argc, char* args[] )
             }
             else if( e.type == SDL_KEYDOWN )
             {
+                lannesMoved = true;
                 //Select surfaces based on key press
                 switch( e.key.keysym.sym )
                 {
@@ -181,12 +319,10 @@ int main( int argc, char* args[] )
 
                     case SDLK_LEFT:
                     lannes.moveHitboxHoriz( false );
-                    lannesWalkTick++;
                     break;
 
                     case SDLK_RIGHT:
                     lannes.moveHitboxHoriz( true );
-                    lannesWalkTick++;
                     break;
 
                     default:
@@ -195,48 +331,30 @@ int main( int argc, char* args[] )
             }
         }
 
-        //redraws lannes every tick
-        lannesPos.x = lannes.getXCoord();
-        lannesPos.y = lannes.getYCoord();
+        lannesTextures.handleLannesMotion( lannesJumping, lannes, lannesMoved );
+        objectTextures.handleObjectMotion( lannesMoved );
 
-        //walking animation
-        if(!lannesJumping)
-        {
-            if( lannesWalkTick < 3 )
-            {
-                imageSurface = lannesVect.at(0);
-            }
-            else if( lannesWalkTick <= 6 )
-            {
-                if( lannesWalkTick == 6 ){ lannesWalkTick = 0; }
-                imageSurface = lannesVect.at(1);
-            }
-        }
-
-        //lannes jumping loop
+        //moves hitbox if lannes is jumping 
         if( lannesJumping )
         {
             lannesJumping = lannes.moveHitboxVert();
-            imageSurface = lannesVect.at(2);
-            lannesWalkTick = 0;
         }
-
-        //safety, so that there is always a sprite drawn
-        if(!imageSurface)
-        {
-            imageSurface = lannesVect.at(0);
-        }
-        SDL_SetColorKey(imageSurface, SDL_TRUE, SDL_MapRGB(imageSurface->format, 255, 0, 0));
-        SDL_BlitSurface( imageSurface, NULL, screenSurface, &lannesPos );
   
-        //cannonball spawns
-        //int random = rand() % 200 + 1;     // v2 in the range 1 to 200
-
         cannonball.calculateTrajectory();
         SDL_Rect ballPos;
         ballPos.x = cannonball.xCoord;
         ballPos.y = cannonball.yCoord;
         SDL_BlitSurface( ballSurface, NULL, screenSurface, &ballPos );
+
+
+
+
+
+
+
+
+        //cannonball spawns
+        //int random = rand() % 200 + 1;     // v2 in the range 1 to 200
 
         /*if( random = 100 )
         {

@@ -1,5 +1,0 @@
-what I have right now:
-- the ability to draw a window of specific size
-
-what needs to be done next:
-- implement a working backend (abstract coordinate system) and a scrolling background
