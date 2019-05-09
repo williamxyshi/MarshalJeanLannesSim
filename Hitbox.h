@@ -5,7 +5,10 @@
 class Hitbox
 {
 	public:
-		Hitbox( int xStartCoord, int yStartCoord );
+		Hitbox( int xStartCoord, int yStartCoord,
+				int _horizSpeed, int _vertSpeed,
+				const int _hitboxXCoord, 
+				const int _hitboxYCoord );
 
 		int getXCoord();
 		int getYCoord();
@@ -18,8 +21,11 @@ class Hitbox
 
 		int xCoord;
 		int yCoord;
+
+		const int hitboxXCoord, hitboxYCoord;
 		
 		int jumpTick = 0;
+		const int horizSpeed, vertSpeed;
 
 };
 
@@ -43,16 +49,21 @@ class Lannes: public Hitbox
 class Cannonball
 {
 	public:
-		Cannonball( Hitbox& lannes );
+		Cannonball( Hitbox& lannes, 
+					const int _xDimension,
+					const int _yDimension );
 		bool calculateTrajectory();
 
-		bool detectHit();
+		bool detectHit( Hitbox& hitbox);
 
 		int xCoord;
 		int yCoord;
+
+		bool renderMe; //if it is offscreen, do not render/blit
 
 	private:
 		double aFactor;
 		int bFactor, cFactor;
 		int currentTick, minTick;
+		const int hitboxXDimension, hitboxYDimension;
 };
