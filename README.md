@@ -11,3 +11,5 @@ This simulator sets the player as Jean Lannes, and the main goal is to dodge can
 
 
 thanks a TON to LazyFoo.net for their tutorials on SDL as well as MakeFiles, without them I probably would have used PyGame LOL
+thanks to haoda for inspiring me to make a game
+thanks to mathieu for helping me debug the cannonball algorithm :)
