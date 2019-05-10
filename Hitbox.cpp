@@ -114,6 +114,9 @@ hitboxYDimension(_yDimension)
 	int lannesX = lannes.xCoord + 100;
 	int lannesY = lannes.yCoord;
 
+	/*uses the vector form of the quadratic formula to model the cannonball's movement
+	uses the top right corner as the vertex and the current location of lannes (+100
+	in the x direction) for a point.*/
 	bFactor = xCoord;
 	cFactor = yCoord;
 
@@ -136,6 +139,7 @@ bool Cannonball::calculateTrajectory(  )
 	if( currentTick != minTick )
 	{
 		xCoord = currentTick;
+		//quadratic formula here
 		yCoord = (aFactor * ( (xCoord - bFactor )*(xCoord - bFactor ) ) + cFactor);
 
 		if( yCoord > 825 || xCoord < 0 )
@@ -147,6 +151,7 @@ bool Cannonball::calculateTrajectory(  )
 		}
 		return true;
 	}
+	//move the ball offscreen and turn of rendering if it is no longer needed
 	xCoord = -32;
 	yCoord = -32;
 	renderMe = false;
@@ -180,6 +185,7 @@ bool Cannonball::detectHit( Hitbox& lannes )
 	bool horizontalCheck = false;
 	bool verticalCheck = false;
 
+	//this algorithm basically just checks if the edges of the cannonball are within the player model
 	if( leftBound <= hitboxXCoordB && leftBound >= hitboxXCoordA )
 	{
 		horizontalCheck = true;

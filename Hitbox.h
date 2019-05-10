@@ -29,6 +29,7 @@ class Hitbox
 
 };
 
+//currently unused. FIX_ME: make lannes model use this class instead
 class Lannes: public Hitbox
 {
 	public:
@@ -45,7 +46,7 @@ class Lannes: public Hitbox
 	private:
 		const int lannesSpeed {80};
 };
-
+//FIX_ME inherit from hitbox
 class Cannonball
 {
 	public:

@@ -22,6 +22,7 @@ static SDL_Surface* screenSurface = NULL; //window screen surface
 static SDL_Surface* backgroundSurface = NULL; //background image surface
 static SDL_Surface* imageSurface = NULL; //player model surface
 
+//base textures class, where multiple textures can be stored
 class Textures
 {
     public:
@@ -53,12 +54,14 @@ class Textures
         textureVect textures;
 };
 
+//textures class primarily used by the scrolling background feature
 class ObjectTextures : public Textures
 {
     public:
         typedef std::pair<int, int> textureLoc;
         typedef std::vector<textureLoc> textureLocVect;
 
+        //takes path and start location 
         void initializeTexture( std::string path, int x, int y )
         {
             SDL_Surface* surface = loadSurface( path );
@@ -71,6 +74,7 @@ class ObjectTextures : public Textures
             locationVector.push_back( locationPair );
         }
 
+        //moves the object a specified amount, but only if lannes has moved (scrolling background effect)
         void handleObjectMotion( bool lannesMovedRight )
         {
             SDL_Rect objectPos;
@@ -111,9 +115,12 @@ class ObjectTextures : public Textures
         textureLocVect locationVector;
 };
 
+//texture class that incorporates all of the player model's animations
 class LannesTextures : public Textures
 {
     public:
+
+        //moves the player model of lannes, and animates it
         void handleLannesMotion( bool lannesJumping, Hitbox lannes, bool lannesMoved )
         {
             SDL_Surface* surface;
@@ -231,6 +238,7 @@ SDL_Surface* loadSurface( std::string path )
     return returnSurface;
 }
 
+//loads all textures for lannes' animation
 LannesTextures loadLannesTextures()
 {
     LannesTextures lannesTextures;
@@ -240,6 +248,7 @@ LannesTextures loadLannesTextures()
     return lannesTextures;
 }
 
+//loads all textures for objects' animation
 ObjectTextures loadObjectTextures()
 {
     ObjectTextures objectTextures;
@@ -290,14 +299,16 @@ int main( int argc, char* args[] )
     SDL_BlitScaled( backgroundSurface, NULL, screenSurface, &stretchRect );
     SDL_UpdateWindowSurface( window );
 
+    //locking the framerate variables
     const int fps = 60;
     const int frameDelay = 1000/fps;
-
     unsigned int frameStart;
     int frameTime;
 
     bool quit = false;
     bool lannesJumping = false;
+
+    //stores the necessary information to spawn multiple cannonballs
     std::vector<Cannonball> cannonballList; 
     std::vector<SDL_Surface*> cannonballSurfaceList;
 
@@ -307,14 +318,14 @@ int main( int argc, char* args[] )
     int cannonballSpawnTick= 0;
 
     SDL_Event e;
-
     while( !quit )
     {
 
         frameStart = SDL_GetTicks();
 
         bool lannesMoved = false;
-        bool lannesMovedRight = false;
+        //makes sure the background doesnt scroll if lannes moves left
+        bool lannesMovedRight = false; 
         //resets the window
         SDL_BlitScaled( backgroundSurface, NULL, screenSurface, &stretchRect );
         while( SDL_PollEvent( &e ) != 0 )
@@ -364,7 +375,6 @@ int main( int argc, char* args[] )
 
         //cannonball spawns
         cannonballSpawnTick++;
-
         if( cannonballSpawnTick % 120 == 0 )
         {
             Cannonball cannonball{ lannes, cannonballHitboxXDim, cannonballHitboxYDim };
@@ -375,7 +385,7 @@ int main( int argc, char* args[] )
             cannonballSurfaceList.push_back( ballSurface );
             cannonballSpawnTick = 0;
         }
-
+        //handles the behaviour of each cannonball. 
         if( !cannonballList.empty() )
         {
             for( int i = 0; i < cannonballList.size(); ++i )
@@ -399,8 +409,8 @@ int main( int argc, char* args[] )
 
         SDL_UpdateWindowSurface( window );
 
+        //locks the framerate to 60fps
         frameTime = SDL_GetTicks() - frameStart;
-
         if( frameDelay > frameTime )
         {
             SDL_Delay(frameDelay - frameTime);
