@@ -2,6 +2,9 @@
 simulator of revolutionary/napoleonic frances great marshal: jean lannes
 
 TODO:
+
+-draw a higher resolution background
+
 -add a health bar
 
 -because the quadratic formula maps from top right of the screen to the player, the ball travels much too fast when the player is by the right edge of the screen... find a solution to that
